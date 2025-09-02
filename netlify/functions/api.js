@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
 // STEP 2で取得したGoogle Apps ScriptのウェブアプリURLに書き換えてください
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzudLxCTNNC4z_Jundr6t_F6neT9UpdwQj-zjxlT52n1xLkncOJpNG5iNuvJFXzaS1k/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzs5_PZ0oL_AJLaS3zGsph3mfF46mok7QYbbNHwLT70JexUBlYmotAfQsW7GS6cpZE4/exec";
 
 exports.handler = async (event, context) => {
   if (event.httpMethod === 'GET') {
