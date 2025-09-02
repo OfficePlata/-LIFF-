@@ -88,38 +88,38 @@
             }
         }
 
-        function isExactBirthday(birthdateStr) {
-            if (!birthdateStr) return false;
+        /**
+         * 日付文字列を日本のタイムゾーンで「月/日」形式に変換する関数
+         * @param {string} dateStr - ISO形式の日付文字列 (例: "2025-09-01T15:00:00.000Z")
+         * @returns {string} - "9/2" のような形式の文字列
+         */
+        function formatDateToJST(dateStr) {
+            if (!dateStr) return '';
             try {
-                const now = new Date();
-                const jstDateString = now.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric' });
-
-                const dateParts = birthdateStr.split('/');
-                if (dateParts.length < 2) return false;
-                const normalizedBirthdate = `${parseInt(dateParts[0], 10)}/${parseInt(dateParts[1], 10)}`;
+                const date = new Date(dateStr);
+                // Dateオブジェクトが不正な場合は元の文字列を返す
+                if (isNaN(date.getTime())) return dateStr;
                 
-                return jstDateString === normalizedBirthdate;
+                return date.toLocaleDateString('ja-JP', {
+                    timeZone: 'Asia/Tokyo',
+                    month: 'numeric',
+                    day: 'numeric'
+                });
             } catch (e) {
-                console.error("Could not parse birthdate for exact day check:", birthdateStr);
-                return false;
+                console.error("Could not format date:", dateStr);
+                return dateStr; // エラー時は元の文字列を返す
             }
         }
 
-        function isBirthdayMonth(birthdateStr) {
-            if (!birthdateStr) return false;
-            try {
-                const now = new Date();
-                const jstMonth = now.toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo', month: 'numeric' });
-                
-                const dateParts = birthdateStr.split('/');
-                if (dateParts.length < 1) return false;
-                const birthMonth = parseInt(dateParts[0], 10).toString();
-
-                return jstMonth === birthMonth;
-            } catch (e) {
-                console.error("Could not parse birthdate for month check:", birthdateStr);
-                return false;
-            }
+        /**
+         * 現在の日本の日付・月を取得する関数
+         * @returns {{month: string, day: string, full: string}}
+         */
+        function getJSTNow() {
+            const now = new Date();
+            const month = now.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'numeric' });
+            const day = now.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', day: 'numeric' });
+            return { month, day, full: `${month}/${day}` };
         }
 
         function renderMembers(members, tasks) {
@@ -128,10 +128,15 @@
             const TASK1_OPTIONS = ['未定', '出席', '欠席'];
             const TASK2_OPTIONS = ['未提出', '提出済'];
 
+            const todayJST = getJSTNow();
+
             members.forEach(member => {
                 const card = document.createElement('div');
-                const isToday = isExactBirthday(member.birthdate);
-                const isMonth = isBirthdayMonth(member.birthdate);
+                
+                const formattedBirthdate = formatDateToJST(member.birthdate);
+                const isToday = formattedBirthdate && formattedBirthdate === todayJST.full;
+                const birthMonth = formattedBirthdate ? formattedBirthdate.split('/')[0] : null;
+                const isMonth = birthMonth && birthMonth === todayJST.month;
 
                 let cardClass = 'bg-white rounded-lg shadow-md p-4 flex flex-col space-y-3';
                 let birthdayIcon = '';
@@ -150,7 +155,7 @@
                     <div class="flex justify-between items-start">
                         <div>
                             <h2 class="text-lg font-bold flex items-center">${member.name}${birthdayIcon}</h2>
-                            <p class="text-sm text-gray-500">${member.birthdate ? '誕生日: ' + member.birthdate : ''}</p>
+                            <p class="text-sm text-gray-500">${formattedBirthdate ? '誕生日: ' + formattedBirthdate : ''}</p>
                         </div>
                         <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">ID: ${member.id}</span>
                     </div>
@@ -216,12 +221,13 @@
             const toast = document.getElementById('toast-notification');
             toast.textContent = message;
             toast.className = `toast show ${success ? 'bg-gray-800' : 'bg-red-600'}`;
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => {
+            clearTimeout(toastimer);
+            toastimer = setTimeout(() => {
                 toast.className = 'toast';
             }, 2000);
         }
     </script>
 </body>
 </html>
+
 
