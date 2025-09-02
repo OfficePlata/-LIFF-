@@ -40,7 +40,10 @@
 
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
-        const LIFF_ID = "2007976447-OJlR1NJq";
+        // ▼▼▼【重要】▼▼▼
+        // LINE Developersコンソールで取得した、あなた自身のLIFF IDに書き換えてください。
+        // 例: const LIFF_ID = "1234567890-abcdefgh";
+        const LIFF_ID = "2007976447-OJlR1NJq"; // ← ここをあなたのLIFF IDに書き換えてください！
 
         document.addEventListener('DOMContentLoaded', () => {
             initializeLiff();
@@ -48,6 +51,10 @@
 
         async function initializeLiff() {
             try {
+                // LIFF IDが初期値のままの場合、処理を中断してエラーメッセージを表示
+                if (LIFF_ID === "YOUR_LIFF_ID") {
+                    throw new Error("LIFF IDが設定されていません。コードを修正してください。");
+                }
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) {
                     liff.login();
@@ -58,7 +65,7 @@
                 fetchDataAndRender();
             } catch (error) {
                 console.error('LIFF Initialization failed', error);
-                document.getElementById('loading').innerHTML = '<p class="text-red-500">LIFFの初期化に失敗しました。アプリを再起動してください。</p>';
+                document.getElementById('loading').innerHTML = `<p class="text-red-500">LIFFの初期化に失敗しました。<br>LIFF IDが正しく設定されているか確認してください。</p>`;
             }
         }
 
@@ -81,6 +88,40 @@
             }
         }
 
+        function isExactBirthday(birthdateStr) {
+            if (!birthdateStr) return false;
+            try {
+                const now = new Date();
+                const jstDateString = now.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric' });
+
+                const dateParts = birthdateStr.split('/');
+                if (dateParts.length < 2) return false;
+                const normalizedBirthdate = `${parseInt(dateParts[0], 10)}/${parseInt(dateParts[1], 10)}`;
+                
+                return jstDateString === normalizedBirthdate;
+            } catch (e) {
+                console.error("Could not parse birthdate for exact day check:", birthdateStr);
+                return false;
+            }
+        }
+
+        function isBirthdayMonth(birthdateStr) {
+            if (!birthdateStr) return false;
+            try {
+                const now = new Date();
+                const jstMonth = now.toLocaleDateString('en-US', { timeZone: 'Asia/Tokyo', month: 'numeric' });
+                
+                const dateParts = birthdateStr.split('/');
+                if (dateParts.length < 1) return false;
+                const birthMonth = parseInt(dateParts[0], 10).toString();
+
+                return jstMonth === birthMonth;
+            } catch (e) {
+                console.error("Could not parse birthdate for month check:", birthdateStr);
+                return false;
+            }
+        }
+
         function renderMembers(members, tasks) {
             const memberGrid = document.getElementById('member-grid');
             memberGrid.innerHTML = '';
@@ -89,12 +130,26 @@
 
             members.forEach(member => {
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-lg shadow-md p-4 flex flex-col space-y-3";
+                const isToday = isExactBirthday(member.birthdate);
+                const isMonth = isBirthdayMonth(member.birthdate);
+
+                let cardClass = 'bg-white rounded-lg shadow-md p-4 flex flex-col space-y-3';
+                let birthdayIcon = '';
+
+                if (isToday) {
+                    cardClass += ' border-2 border-yellow-400 ring-2 ring-yellow-200';
+                    birthdayIcon = '<span class="ml-2 text-xl">🎂</span>';
+                } else if (isMonth) {
+                    cardClass += ' border-2 border-sky-400';
+                    birthdayIcon = '<span class="ml-2 text-xl">🎁</span>';
+                }
+                
+                card.className = cardClass;
                 
                 card.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
-                            <h2 class="text-lg font-bold">${member.name}</h2>
+                            <h2 class="text-lg font-bold flex items-center">${member.name}${birthdayIcon}</h2>
                             <p class="text-sm text-gray-500">${member.birthdate ? '誕生日: ' + member.birthdate : ''}</p>
                         </div>
                         <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">ID: ${member.id}</span>
@@ -169,5 +224,4 @@
     </script>
 </body>
 </html>
-
 
