@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #f7fafc; }
+        textarea { resize: none; }
         .toast {
             visibility: hidden; opacity: 0;
             transition: opacity 0.3s, bottom 0.3s;
@@ -82,6 +83,7 @@
 
         function renderMembers(members, tasks) {
             const memberGrid = document.getElementById('member-grid');
+            memberGrid.innerHTML = '';
             const TASK1_OPTIONS = ['未定', '出席', '欠席'];
             const TASK2_OPTIONS = ['未提出', '提出済'];
 
@@ -89,30 +91,34 @@
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-lg shadow-md p-4 flex flex-col space-y-3";
                 
-                const header = `
+                card.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
                             <h2 class="text-lg font-bold">${member.name}</h2>
+                            <p class="text-sm text-gray-500">${member.birthdate ? '誕生日: ' + member.birthdate : ''}</p>
                         </div>
                         <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">ID: ${member.id}</span>
-                    </div>`;
-
-                const task1Select = createSelect(tasks.task1_name, 'task1_status', member.id, TASK1_OPTIONS, member.task1_status);
-                const task2Select = createSelect(tasks.task2_name, 'task2_status', member.id, TASK2_OPTIONS, member.task2_status);
-
-                const notes = `
+                    </div>
+                    ${createSelect(tasks.task1_name, 'task1_status', member.id, TASK1_OPTIONS, member.task1_status)}
+                    ${createSelect(tasks.task2_name, 'task2_status', member.id, TASK2_OPTIONS, member.task2_status)}
                     <div class="pt-2 border-t">
-                        <h3 class="text-sm font-medium text-gray-500">備考</h3>
-                        <p class="text-sm h-10">${member.notes || ' '}</p>
-                    </div>`;
-
-                card.innerHTML = header + task1Select + task2Select + notes;
+                        <label class="text-sm font-medium text-gray-500">備考</label>
+                        <textarea data-id="${member.id}" data-key="notes" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm h-20">${member.notes || ''}</textarea>
+                    </div>
+                `;
                 memberGrid.appendChild(card);
             });
-            
-            document.querySelectorAll('select[data-id]').forEach(select => {
-                select.addEventListener('change', handleStatusUpdate);
+
+            memberGrid.addEventListener('change', (e) => {
+                if (e.target.tagName === 'SELECT') {
+                    handleUpdate(e.target);
+                }
             });
+            memberGrid.addEventListener('blur', (e) => {
+                if (e.target.tagName === 'TEXTAREA') {
+                    handleUpdate(e.target);
+                }
+            }, true);
         }
         
         function createSelect(labelText, taskKey, memberId, options, selectedValue) {
@@ -126,11 +132,10 @@
                 </div>`;
         }
 
-        async function handleStatusUpdate(event) {
-            const select = event.target;
-            const memberId = select.dataset.id;
-            const taskKey = select.dataset.key;
-            const value = select.value;
+        async function handleUpdate(element) {
+            const memberId = element.dataset.id;
+            const taskKey = element.dataset.key;
+            const value = element.value;
 
             try {
                 const response = await fetch('/.netlify/functions/api', {
@@ -164,4 +169,5 @@
     </script>
 </body>
 </html>
+
 
